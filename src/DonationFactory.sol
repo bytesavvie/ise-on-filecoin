@@ -1,10 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import "./Donation.sol";
+import {Donation} from "src/Donation.sol";
+import {IRouter} from "src/Types/Interface/IRouter.sol";
+import {GetRoute} from "src/Router/GetRoute.sol";
+import {IPoolAdapter} from "src/Types/Interface/IPoolAdapter.sol";
 
 contract DonationFactory {
     event DonationCreated(address indexed donationContract, address indexed donor, address[] indexed nonProfits);
+
+    address private immutable router;
+    // IPoolRegistry private poolRegistry;
 
     // Mapping from donor address to their donation contracts
     mapping(address => address[]) private donorDonations;
@@ -13,12 +19,12 @@ contract DonationFactory {
     mapping(address => address[]) private nonProfitDonations;
 
     // Function to create a new donation contract instance for multiple non-profits
-    function donate(address pool, uint256 amount) external payable {
+    function donate(uint256[] calldata poolIds, uint256 amount, ) external payable {
         require(msg.value == amount, "Donation amount does not match sent value");
-        require(address(poolAdapters[pool]) != address(0), "Pool adapter not registered");
 
         // Use the adapter to stake to the pool
-        uint256 stakingTokenAmount = poolAdapters[pool].stake(amount, msg.sender);
+        IPoolAdapter poolAdapter = GetRoute.getPoolAdapter(router, poolId);
+        uint256 stakingTokenAmount = poolAdapter.stake(amount);
 
         // Create and store donation information as before
         // ...

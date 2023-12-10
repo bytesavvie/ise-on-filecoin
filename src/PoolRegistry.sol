@@ -1,16 +1,25 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-contract PoolRegistry {
-    mapping(address => bool) public pools;
+import "./Router.sol";
+import "./IPoolInterface.sol";
 
-    function attachPool(address pool) external {
-        // Logic to register a pool
-        pools[pool] = true;
+contract PoolRegistry {
+    Router public router;
+
+    constructor(Router _router) {
+        router = _router;
     }
 
-    // Function to register a new pool adapter
-    function registerPoolAdapter(address pool, IPoolInterface poolAdapter) external {
-        poolAdapters[pool] = poolAdapter;
+    function registerPoolAdapter(address pool, address adapter) external {
+        // Access control checks to ensure only authorized users can register adapters
+        bytes32 identifier = router.getPoolAdapterIdentifier(pool);
+        router.updateAddress(identifier, adapter);
+    }
+
+    function getPoolAdapter(address pool) external view returns (IPoolInterface) {
+        address adapterAddress = router.getAddress(router.getPoolAdapterIdentifier(pool));
+        require(adapterAddress != address(0), "Adapter not found for the given pool");
+        return IPoolInterface(adapterAddress);
     }
 }
